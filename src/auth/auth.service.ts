@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { Repository } from 'typeorm';
@@ -71,13 +75,13 @@ export class AuthService {
       select: { id: true, password: true },
     });
 
-    const isPasswordMatched = bcrypt.compareSync(
-      password,
-      user?.password ?? '',
-    );
+    if (!user) {
+      throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
+    }
+    const isPasswordMatched = bcrypt.compareSync(password, user.password);
 
-    if (!user && !isPasswordMatched) {
-      return null;
+    if (!isPasswordMatched) {
+      throw new UnauthorizedException('비밀번호가 일치하지 않습니다.');
     }
 
     return { id: user.id };
